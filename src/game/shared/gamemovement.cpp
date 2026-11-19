@@ -2349,11 +2349,11 @@ void CGameMovement::PlaySwimSound()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CGameMovement::CheckJumpButton( void )
+bool CGameMovement::CheckJumpButton(void)
 {
 	if (player->pl.deadflag)
 	{
-		mv->m_nOldButtons |= IN_JUMP ;	// don't jump again until released
+		mv->m_nOldButtons |= IN_JUMP;	// don't jump again until released
 		return false;
 	}
 
@@ -2363,23 +2363,23 @@ bool CGameMovement::CheckJumpButton( void )
 		player->m_flWaterJumpTime -= gpGlobals->frametime;
 		if (player->m_flWaterJumpTime < 0)
 			player->m_flWaterJumpTime = 0;
-		
+
 		return false;
 	}
 
 	// If we are in the water most of the way...
-	if ( player->GetWaterLevel() >= 2 )
-	{	
+	if (player->GetWaterLevel() >= 2)
+	{
 		// swimming, not jumping
-		SetGroundEntity( NULL );
+		SetGroundEntity(NULL);
 
-		if(player->GetWaterType() == CONTENTS_WATER)    // We move up a certain amount
+		if (player->GetWaterType() == CONTENTS_WATER)    // We move up a certain amount
 			mv->m_vecVelocity[2] = 100;
 		else if (player->GetWaterType() == CONTENTS_SLIME)
 			mv->m_vecVelocity[2] = 80;
-		
+
 		// play swiming sound
-		if ( player->m_flSwimSoundTime <= 0 )
+		if (player->m_flSwimSoundTime <= 0)
 		{
 			// Don't play sound again for 1 second
 			player->m_flSwimSoundTime = 1000;
@@ -2390,7 +2390,7 @@ bool CGameMovement::CheckJumpButton( void )
 	}
 
 	// No more effect
- 	if (player->GetGroundEntity() == NULL)
+	if (player->GetGroundEntity() == NULL)
 	{
 		mv->m_nOldButtons |= IN_JUMP;
 		return false;		// in air, so no effect
@@ -2398,43 +2398,43 @@ bool CGameMovement::CheckJumpButton( void )
 
 	// Don't allow jumping when the player is in a stasis field.
 #ifndef HL2_EPISODIC
-	if ( player->m_Local.m_bSlowMovement )
+	if (player->m_Local.m_bSlowMovement)
 		return false;
 #endif
 
-	if ( mv->m_nOldButtons & IN_JUMP )
+	if (mv->m_nOldButtons & IN_JUMP)
 		return false;		// don't pogo stick
 
 	// Cannot jump will in the unduck transition.
-	if ( player->m_Local.m_bDucking && (  player->GetFlags() & FL_DUCKING ) )
+	if (player->m_Local.m_bDucking && (player->GetFlags() & FL_DUCKING))
 		return false;
 
 	// Still updating the eye position.
-	if ( player->m_Local.m_flDuckJumpTime > 0.0f )
+	if (player->m_Local.m_flDuckJumpTime > 0.0f)
 		return false;
 
 
 	// In the air now.
-    SetGroundEntity( NULL );
-	
-	player->PlayStepSound( (Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true );
-	
-	MoveHelper()->PlayerSetAnimation( PLAYER_JUMP );
+	SetGroundEntity(NULL);
+
+	player->PlayStepSound((Vector&)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true);
+
+	MoveHelper()->PlayerSetAnimation(PLAYER_JUMP);
 
 	float flGroundFactor = 1.0f;
 	if (player->m_pSurfaceData)
 	{
-		flGroundFactor = player->m_pSurfaceData->game.jumpFactor; 
+		flGroundFactor = player->m_pSurfaceData->game.jumpFactor;
 	}
 
 	float flMul;
-	if ( g_bMovementOptimizations )
+	if (g_bMovementOptimizations)
 	{
 #if defined(HL2_DLL) || defined(HL2_CLIENT_DLL)
-		Assert( GetCurrentGravity() == 600.0f );
+		Assert(GetCurrentGravity() == 600.0f);
 		flMul = 160.0f;	// approx. 21 units.
 #else
-		Assert( GetCurrentGravity() == 800.0f );
+		Assert(GetCurrentGravity() == 800.0f);
 		flMul = 268.3281572999747f;
 #endif
 
@@ -2447,7 +2447,7 @@ bool CGameMovement::CheckJumpButton( void )
 	// Acclerate upward
 	// If we are ducking...
 	float startz = mv->m_vecVelocity[2];
-	if ( (  player->m_Local.m_bDucking ) || (  player->GetFlags() & FL_DUCKING ) )
+	if ((player->m_Local.m_bDucking) || (player->GetFlags() & FL_DUCKING))
 	{
 		// d = 0.5 * g * t^2		- distance traveled with linear accel
 		// t = sqrt(2.0 * 45 / g)	- how long to fall 45 units
@@ -2464,38 +2464,85 @@ bool CGameMovement::CheckJumpButton( void )
 
 	// Add a little forward velocity based on your current forward velocity - if you are not sprinting.
 #if defined( HL2_DLL ) || defined( HL2_CLIENT_DLL )
-	if ( gpGlobals->maxClients == 1 )
+	bool canBHop = ((sv_bhop.GetBool()) ? true : (gpGlobals->maxClients == 1));
+
+	if (canBHop)
 	{
-		CHLMoveData *pMoveData = ( CHLMoveData* )mv;
+		if (sv_bhop_mode.GetInt() == 1)
+		{
+			Vector vecForward;
+			AngleVectors(mv->m_vecViewAngles, &vecForward);
+			vecForward.z = 0;
+			VectorNormalize(vecForward);
+			for (int iAxis = 0; iAxis < 2; ++iAxis)
+			{
+				vecForward[iAxis] *= (mv->m_flForwardMove * sv_bhop_boost.GetFloat());
+				//			vecForward[iAxis] *= ( mv->m_flForwardMove * jumpforwardsprintscale.GetFloat() );
+			}
+			VectorAdd(vecForward, mv->m_vecVelocity, mv->m_vecVelocity);
+		}
+		else
+		{
+			Vector vecForward;
+			AngleVectors(mv->m_vecViewAngles, &vecForward);
+			vecForward.z = 0;
+			VectorNormalize(vecForward);
+
+			// We give a certain percentage of the current forward movement as a bonus to the jump speed.  That bonus is clipped
+			// to not accumulate over time.
+			float flSpeedBoostPerc = sv_bhop_boost.GetFloat();
+			float flSpeedAddition = fabs(mv->m_flForwardMove * flSpeedBoostPerc);
+			float flMaxSpeed = mv->m_flMaxSpeed + (mv->m_flMaxSpeed * flSpeedBoostPerc);
+			float flNewSpeed = (flSpeedAddition + mv->m_vecVelocity.Length2D());
+
+			// If we're over the maximum, we want to only boost as much as will get us to the goal speed
+			if (flNewSpeed > flMaxSpeed)
+			{
+				flSpeedAddition -= flNewSpeed - flMaxSpeed;
+			}
+
+			if (mv->m_flForwardMove < 0.0f)
+				flSpeedAddition *= -1.0f;
+
+			// Add it on
+			VectorAdd((vecForward * flSpeedAddition), mv->m_vecVelocity, mv->m_vecVelocity);
+		}
+	}
+#endif
+
+#if defined( HL2_DLL ) || defined( HL2_CLIENT_DLL )
+	if (gpGlobals->maxClients == 1)
+	{
+		CHLMoveData* pMoveData = (CHLMoveData*)mv;
 		Vector vecForward;
-		AngleVectors( mv->m_vecViewAngles, &vecForward );
+		AngleVectors(mv->m_vecViewAngles, &vecForward);
 		vecForward.z = 0;
-		VectorNormalize( vecForward );
-		
+		VectorNormalize(vecForward);
+
 		// We give a certain percentage of the current forward movement as a bonus to the jump speed.  That bonus is clipped
 		// to not accumulate over time.
-		float flSpeedBoostPerc = ( !pMoveData->m_bIsSprinting && !player->m_Local.m_bDucked ) ? 0.5f : 0.1f;
-		float flSpeedAddition = fabs( mv->m_flForwardMove * flSpeedBoostPerc );
-		float flMaxSpeed = mv->m_flMaxSpeed + ( mv->m_flMaxSpeed * flSpeedBoostPerc );
-		float flNewSpeed = ( flSpeedAddition + mv->m_vecVelocity.Length2D() );
+		float flSpeedBoostPerc = (!pMoveData->m_bIsSprinting && !player->m_Local.m_bDucked) ? 0.5f : 0.1f;
+		float flSpeedAddition = fabs(mv->m_flForwardMove * flSpeedBoostPerc);
+		float flMaxSpeed = mv->m_flMaxSpeed + (mv->m_flMaxSpeed * flSpeedBoostPerc);
+		float flNewSpeed = (flSpeedAddition + mv->m_vecVelocity.Length2D());
 
 		// If we're over the maximum, we want to only boost as much as will get us to the goal speed
-		if ( flNewSpeed > flMaxSpeed )
+		if (flNewSpeed > flMaxSpeed)
 		{
 			flSpeedAddition -= flNewSpeed - flMaxSpeed;
 		}
 
-		if ( mv->m_flForwardMove < 0.0f )
+		if (mv->m_flForwardMove < 0.0f)
 			flSpeedAddition *= -1.0f;
 
 		// Add it on
-		VectorAdd( (vecForward*flSpeedAddition), mv->m_vecVelocity, mv->m_vecVelocity );
+		VectorAdd((vecForward * flSpeedAddition), mv->m_vecVelocity, mv->m_vecVelocity);
 	}
 #endif
 
 	FinishGravity();
 
-	CheckV( player->CurrentCommandNumber(), "CheckJump", mv->m_vecVelocity );
+	CheckV(player->CurrentCommandNumber(), "CheckJump", mv->m_vecVelocity);
 
 	mv->m_outJumpVel.z += mv->m_vecVelocity[2] - startz;
 	mv->m_outStepHeight += 0.15f;
@@ -2503,7 +2550,7 @@ bool CGameMovement::CheckJumpButton( void )
 	OnJump(mv->m_outJumpVel.z);
 
 	// Set jump time.
-	if ( gpGlobals->maxClients == 1 )
+	if (gpGlobals->maxClients == 1)
 	{
 		player->m_Local.m_flJumpTime = GAMEMOVEMENT_JUMP_TIME;
 		player->m_Local.m_bInDuckJump = true;
@@ -2511,10 +2558,10 @@ bool CGameMovement::CheckJumpButton( void )
 
 #if defined( HL2_DLL )
 
-	if ( xc_uncrouch_on_jump.GetBool() )
+	if (xc_uncrouch_on_jump.GetBool())
 	{
 		// Uncrouch when jumping
-		if ( player->GetToggledDuckState() )
+		if (player->GetToggledDuckState())
 		{
 			player->ToggleDuck();
 		}
@@ -2526,7 +2573,6 @@ bool CGameMovement::CheckJumpButton( void )
 	mv->m_nOldButtons |= IN_JUMP;	// don't jump again until released
 	return true;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
