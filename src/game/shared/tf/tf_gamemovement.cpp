@@ -80,7 +80,7 @@ ConVar tf_movement_lost_footing_friction( "tf_movement_lost_footing_friction", "
 
 ConVar sv_bhop("sv_bhop", "1", FCVAR_REPLICATED | FCVAR_NOTIFY);
 ConVar sv_bhop_tf_cap("sv_bhop_tf_cap", "1", FCVAR_REPLICATED | FCVAR_NOTIFY);
-ConVar sv_bhop_tf_cap_boost("sv_bhop_tf_cap_boost", "0.3", FCVAR_REPLICATED | FCVAR_NOTIFY);
+ConVar sv_bhop_tf_cap_boost("sv_bhop_tf_cap_boost", "0.5", FCVAR_REPLICATED | FCVAR_NOTIFY);
 
 
 extern ConVar cl_forwardspeed;
@@ -172,6 +172,7 @@ private:
 	Vector		m_vecWaterPoint;
 	CTFPlayer  *m_pTFPlayer;
 	bool		m_isPassingThroughEnemies;
+	bool		m_storejump = false;
 };
 
 
@@ -1235,23 +1236,35 @@ bool CTFGameMovement::CheckJumpButton()
 			return false;
 	}
 
+	//check for jump midjump
+	//if (!(player->GetFlags() & FL_ONGROUND))
+	//{
+	//	if (mv->m_nButtons & IN_JUMP)
+	//	{
+	//		m_storejump = true;
+
+	//	}
+	//}
+
+
+
 	// Cannot jump while in the unduck transition.
 	if ((player->m_Local.m_bDucking && (player->GetFlags() & FL_DUCKING)) || (player->m_Local.m_flDuckJumpTime > 0.0f))
 		return false;
 
 	// Cannot jump again until the jump button has been released.
-	if (mv->m_nOldButtons & IN_JUMP)
-		return false;
+	//if (mv->m_nOldButtons & IN_JUMP)
+	//	return false;
 
 	// In air, so ignore jumps 
 	// (unless you are a scout or ghost or parachute
 	if (!bOnGround)
 	{
-		if (m_pTFPlayer->CanAirDash())
-		{
-			bAirDash = true;
-		}
-		else
+		//if (m_pTFPlayer->CanAirDash())
+		//{
+		//	bAirDash = true;
+		//}
+		//else
 		{
 			mv->m_nOldButtons |= IN_JUMP;
 			return false;
@@ -1259,13 +1272,13 @@ bool CTFGameMovement::CheckJumpButton()
 	}
 
 	// Check for an air dash.
-	if (bAirDash)
-	{
-		AirDash();
-		// Reset air duck for Scouts on AirDash.
-		m_pTFPlayer->m_Shared.SetAirDucked(0);
-		return true;
-	}
+	//if (bAirDash)
+	//{
+	//	AirDash();
+	//	// Reset air duck for Scouts on AirDash.
+	//	m_pTFPlayer->m_Shared.SetAirDucked(0);
+	//	return true;
+	//}
 
 //#ifdef BDSBASE
 //	if (sv_bhop_tf_cap.GetBool())
@@ -2626,6 +2639,7 @@ void CTFGameMovement::CheckFalling( void )
 		{
 			m_pTFPlayer->m_Shared.SetJumping( false );
 
+
 #ifdef CLIENT_DLL
 			IGameEvent *event = gameeventmanager->CreateEvent( "landed" );
 			if ( event && m_pTFPlayer->IsLocalPlayer() )
@@ -2634,6 +2648,12 @@ void CTFGameMovement::CheckFalling( void )
 				gameeventmanager->FireEventClientSide( event );
 			}
 #endif // CLIENT_DLL
+		}
+		//ohgodohfuck
+		if ((player->GetFlags() & FL_ONGROUND)&& m_storejump == true)
+		{
+			m_storejump = false;
+			CheckJumpButton();
 		}
 	}
 
