@@ -1236,16 +1236,14 @@ bool CTFGameMovement::CheckJumpButton()
 			return false;
 	}
 
-	//check for jump midjump
+	////check for jump midjump
 	//if (!(player->GetFlags() & FL_ONGROUND))
 	//{
 	//	if (mv->m_nButtons & IN_JUMP)
 	//	{
 	//		m_storejump = true;
-
 	//	}
 	//}
-
 
 
 	// Cannot jump while in the unduck transition.
