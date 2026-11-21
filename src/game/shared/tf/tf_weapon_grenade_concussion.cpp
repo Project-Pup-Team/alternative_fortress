@@ -49,6 +49,35 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_concussion );
 BEGIN_DATADESC( CTFGrenadeConcussion )
 END_DATADESC()
 
+IMPLEMENT_NETWORKCLASS_ALIASED(TFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj)
+
+LINK_ENTITY_TO_CLASS(tf_grenade_concussion_proj, CTFGrenadeConcussionProjectile);
+PRECACHE_REGISTER(tf_grenade_concussion_proj);
+
+BEGIN_NETWORK_TABLE(CTFGrenadeConcussionProjectile, DT_TFGrenadeConcussionProjectile)
+#ifdef CLIENT_DLL
+RecvPropVector(RECVINFO(m_vInitialVelocity)),
+RecvPropBool(RECVINFO(m_bCritical)),
+RecvPropInt(RECVINFO(m_iDeflected)),
+
+RecvPropVector(RECVINFO_NAME(m_vecNetworkOrigin, m_vecOrigin)),
+RecvPropQAngles(RECVINFO_NAME(m_angNetworkAngles, m_angRotation)),
+RecvPropEHandle(RECVINFO(m_hDeflectOwner)),
+
+#else
+SendPropVector(SENDINFO(m_vInitialVelocity), 20 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/),
+SendPropBool(SENDINFO(m_bCritical)),
+
+SendPropExclude("DT_BaseEntity", "m_vecOrigin"),
+SendPropExclude("DT_BaseEntity", "m_angRotation"),
+
+SendPropVector(SENDINFO(m_vecOrigin), -1, SPROP_COORD_MP_INTEGRAL | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin),
+SendPropInt(SENDINFO(m_iDeflected), 4, SPROP_UNSIGNED),
+SendPropEHandle(SENDINFO(m_hDeflectOwner)),
+
+#endif
+END_NETWORK_TABLE()
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -79,7 +108,7 @@ CTFGrenadeConcussionProjectile* CTFGrenadeConcussionProjectile::Create( const Ve
 																const Vector &velocity, const AngularImpulse &angVelocity, 
 																CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float timer, int iFlags )
 {
-	CTFGrenadeConcussionProjectile *pGrenade = static_cast<CTFGrenadeConcussionProjectile*>( CTFWeaponBaseGrenadeProj::Create( "tf_weapon_grenade_concussion_projectile", position, angles, velocity, angVelocity, pOwner, weaponInfo, timer, iFlags ) );
+	CTFGrenadeConcussionProjectile *pGrenade = static_cast<CTFGrenadeConcussionProjectile*>( CTFWeaponBaseGrenadeProj::Create( "tf_weapon_grenade_concussion_projectile", position, angles, velocity, angVelocity, pOwner, weaponInfo, iFlags ) );
 	if ( pGrenade )
 	{
 		pGrenade->ApplyLocalAngularVelocityImpulse( angVelocity );
@@ -142,6 +171,14 @@ void CTFGrenadeConcussionProjectile::Detonate()
 	{
 		UTIL_ScreenShake( GetAbsOrigin(), GetShakeAmplitude(), 150.0, 1.0, GetShakeRadius(), SHAKE_START );
 	}
+}
+
+void CTFGrenadeConcussionProjectile::ItemPostFrame()
+{
+}
+
+void CTFGrenadeConcussionProjectile::DrawRadius(float fl_DmgRadius)
+{
 }
 
 extern ConVar tf_grenade_show_radius;
@@ -210,4 +247,55 @@ void CTFGrenadeConcussionProjectile::Explode( trace_t *pTrace, int bitsDamageTyp
 #endif
 }
 
+void CTFGrenadeConcussionProjectile::SendDispatchEffect(){}
+void CTFGrenadeConcussionProjectile::RemoveGrenade()
+{
+	UTIL_Remove(this);
+}
+
+#ifdef CLIENT_DLL
+
+bool CTFGrenadeConcussionProjectile::ShouldDraw(void)
+{
+	return false;
+}
+
+#else
+
+void CTFGrenadeConcussionProjectile::HandleAnimEvent(animevent_t* pEvent)
+{
+}
+
+CTFWeaponBaseGrenadeProj* CTFGrenadeConcussionProjectile::EmitGrenade(Vector vecSrc, QAngle vecAngles, Vector vecVel, AngularImpulse angImpulse, CBasePlayer* pPlayer, float flTime, int iflags)
+{
+	return nullptr;
+}
+
 #endif
+#endif
+
+void CTFGrenadeConcussion::Spawn()
+{
+}
+
+void CTFGrenadeConcussion::Precache()
+{
+}
+
+void CTFGrenadeConcussion::Explode(trace_t* pTrace, int bitsDamageType)
+{
+}
+
+void CTFGrenadeConcussion::ItemPostFrame()
+{
+}
+
+bool CTFGrenadeConcussion::ShouldDraw()
+{
+	return true;
+}
+
+bool CTFGrenadeConcussion::Deploy()
+{
+	return false;
+}

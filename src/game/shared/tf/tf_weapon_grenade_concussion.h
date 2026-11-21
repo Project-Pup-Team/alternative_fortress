@@ -29,6 +29,15 @@ public:
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 
+	// Overrides.
+	virtual void	Spawn();
+	virtual void	Precache();
+	virtual void	Explode(trace_t* pTrace, int bitsDamageType);
+	virtual void	ItemPostFrame();
+	virtual void	HideThink(void) { SetWeaponVisible(false); }
+	virtual bool	ShouldDraw();
+	virtual bool	Deploy();
+
 	CTFGrenadeConcussion() {}
 
 	// Unique identifier.
@@ -57,6 +66,7 @@ class CTFGrenadeConcussionProjectile : public CTFWeaponBaseGrenadeProj
 public:
 
 	DECLARE_CLASS( CTFGrenadeConcussionProjectile, CTFWeaponBaseGrenadeProj );
+	DECLARE_NETWORKCLASS();
 
 	// Unique identifier.
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRENADE_CONCUSSION; }
@@ -71,6 +81,25 @@ public:
 	virtual void	BounceSound( void );
 	virtual void	Explode( trace_t *pTrace, int bitsDamageType );
 	virtual void	Detonate();
+	virtual void	ItemPostFrame();
+	void			DrawRadius( float fl_DmgRadius );
+	void			SendDispatchEffect();
+	void			RemoveGrenade();
+
+#ifdef CLIENT_DLL
+
+	bool					ShouldDraw(void);
+	// Server specific.
+#else
+
+	DECLARE_DATADESC();
+
+	virtual void			HandleAnimEvent(animevent_t* pEvent);
+
+	// Each derived grenade class implements this.
+	virtual CTFWeaponBaseGrenadeProj* EmitGrenade(Vector vecSrc, QAngle vecAngles, Vector vecVel, AngularImpulse angImpulse, CBasePlayer* pPlayer, float flTime, int iflags = 0);
+
+#endif
 
 private:
 
