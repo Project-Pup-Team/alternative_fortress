@@ -11425,6 +11425,10 @@ int CTFPlayer::CanBuild( int iObjectType, int iObjectMode )
 	return CB_CAN_BUILD;
 }
 
+void CTFPlayerShared::Concussion(CBaseEntity* pGrenade, float fl_DmgRadius)
+{
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

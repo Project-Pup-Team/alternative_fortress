@@ -332,6 +332,8 @@ public:
 	float	GetMaxOverhealMultiplier( void );
 #endif 
 
+	void	Concussion(CBaseEntity *pGrenade, float fl_DmgRadius);
+
 	bool	IsAiming( void );
 
 	bool	ShouldSuppressPrediction( void );
